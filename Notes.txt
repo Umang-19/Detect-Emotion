@@ -1,0 +1,3 @@
+// Change bg image in header.hbs
+// align login container in center
+// add footer
