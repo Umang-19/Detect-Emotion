@@ -1,9 +1,11 @@
 import re
+import text2emotion as te
 import pandas as pd
 import numpy as np
 import emoji
 from collections import Counter
 import matplotlib.pyplot as plt
+import plotly.express as px
 from PIL import Image
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
@@ -26,6 +28,7 @@ def find_contact(s):
     else:
         return False
 
+    
 # Extract Message
 def getMassage(line):
     splitline=line.split(' - ')
@@ -42,7 +45,7 @@ def getMassage(line):
     return date, time, author, message
 
 data=[]
-conversation='../input/chatdata/chatdata.txt'
+conversation='../input/chatdata2/chatdata (2).txt'
 with open(conversation, encoding="utf-8") as fp:
     fp.readline()
     messageBuffer=[]
@@ -60,28 +63,49 @@ with open(conversation, encoding="utf-8") as fp:
             messageBuffer.append(message)
         else:
             messageBuffer.append(line)
-        
+
 df=pd.DataFrame(data, columns=["Date", "Time", "contact", "Message"])
 df['Date']=pd.to_datetime(df['Date'])
 
 data=df.dropna()
 
 sentiments=SentimentIntensityAnalyzer()
-data["positive"]=[sentiments.polarity_scores(i)["pos"] for i in data["Message"]]
-data["negative"]=[sentiments.polarity_scores(i)["neg"] for i in data["Message"]]
-data["neutral"]=[sentiments.polarity_scores(i)["neu"] for i in data["Message"]]
+data["Happy"]= [te.get_emotion(i)["Happy"] for i in data["Message"]]
+data["Angry"]= [te.get_emotion(i)["Angry"] for i in data["Message"]]
+data["Surprise"]= [te.get_emotion(i)["Surprise"] for i in data["Message"]]
+data["Sad"]= [te.get_emotion(i)["Sad"] for i in data["Message"]]
+data["Fear"]= [te.get_emotion(i)["Fear"] for i in data["Message"]]
 
-data.head()
+data
 
-x = sum(data["positive"])
-y = sum(data["negative"])
-z = sum(data["neutral"])
+a = sum(data["Happy"])
+b = sum(data["Angry"])
+c = sum(data["Surprise"])
+d = sum(data["Sad"])
+e = sum(data["Fear"])
 
-def sentiment_score(a, b, c):
-    if (a>b) and (a>c):
-        print("Positive 😊 ")
-    elif (b>a) and (b>c):
-        print("Negative 😡")
+scores = [a,b,c,d,e]
+
+def sentiment_score(a, b, c, d, e):
+    maxval = max(scores)
+    if maxval == a:
+        print("Happy 😄")
+    elif maxval == b:
+        print("Angry 😡")
+    elif maxval == c:
+        print("Surprise 😲")
+    elif maxval == d:
+        print("Sad 😔")
     else:
-        print("Neutral 😐 ")
-sentiment_score(x, y, z)
+        print("Fear 😨")
+sentiment_score(a,b,c,d,e)
+
+data['temp_list'] = data['Message'].apply(lambda x:str(x).split())
+top = Counter([item for sublist in data['temp_list'] for item in sublist])
+temp = pd.DataFrame(top.most_common(15))
+temp.columns = ['Common_words','count']
+temp.style.background_gradient(cmap='Blues')
+
+fig = px.bar(temp, x="count", y="Common_words", title='Most Commmon Words', orientation='h', 
+             width=700, height=700,color='Common_words')
+fig.show()
