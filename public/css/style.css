@@ -236,6 +236,12 @@ body {
   color: #fdc134;
 }
 
+.results img{
+  margin-top: 10px;
+  height:500px;
+  width: 700px;
+}
+
 #header .logo img {
   padding: 0;
   margin: 0;
